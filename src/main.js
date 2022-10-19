@@ -1,3 +1,4 @@
+import IMask from "imask"
 import "./css/index.css"
 
 const creditCardBgColorPrimary = document.querySelector(
@@ -24,3 +25,57 @@ function setCardType(type) {
 }
 
 globalThis.setCardType = setCardType
+
+const securityCode = document.querySelector("#security-code")
+const expirationDate = document.querySelector("#expiration-date")
+const cardNumber = document.querySelector("#card-number")
+
+const securityPattern = {
+  mask: "0000",
+}
+
+const expirationDatePattern = {
+  mask: "MM{/}YY",
+  blocks: {
+    MM: {
+      mask: IMask.MaskedRange,
+      from: 1,
+      to: 12,
+    },
+    YY: {
+      mask: IMask.MaskedRange,
+      from: String(new Date().getFullYear()).slice(2),
+      to: String(new Date().getFullYear() + 10).slice(2),
+    },
+  },
+}
+
+const cardNumberPattern = {
+  mask: [
+    {
+      mask: "0000 0000 0000 0000",
+      regex: /^4\d{0,15}/,
+      cardType: "visa",
+    },
+    {
+      mask: "0000 0000 0000 0000",
+      regex: /(^5[1-5]\d{0,2}|^22[2,9]\d|^2[3,7]\d{0,2})\d{0,12}/,
+      cardType: "mastercard",
+    },
+    {
+      mask: "0000 0000 0000 0000",
+      cardType: "default",
+    },
+  ],
+  dispatch: (appended, dynamicMasked) => {
+    const number = (dynamicMasked.value + appended).replace(/\D/g, "")
+    const foundMask = dynamicMasked.compiledMasks.find(({ regex }) => {
+      return number.match(regex)
+    })
+    return foundMask
+  },
+}
+
+const securityCodeMasked = IMask(securityCode, securityPattern)
+const expirationDateMasked = IMask(expirationDate, expirationDatePattern)
+const cardNumberMasked = IMask(cardNumber, cardNumberPattern)
